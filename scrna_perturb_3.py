@@ -3,9 +3,10 @@ import anndata as ad
 import matplotlib.pyplot as plt
 import os
 import random
+import pandas as pd
 
 # --- CONFIGURATION ---
-# Replace this with the actual path to one of your downloaded .h5ad files.
+# Replace with the actual path to one of your downloaded .h5ad files.
 file_path = '/home2/figshare_data/HEK293T_filtered_dual_guide_cells.h5ad'
 
 # You have correctly identified 'gene_target' as the perturbation column.
@@ -13,7 +14,7 @@ perturbation_column = 'gene_target'
 
 # Define the perturbation you want to visualize.
 target_pert_name = 'TP53'
-control_pert_name = 'AAV-control' # Ensure this control name exists in your 'gene_target' column
+control_pert_name = 'AAV-control'
 
 # Define the number of cells to randomly subsample.
 n_cells_to_subsample = 100000
@@ -36,13 +37,10 @@ try:
     print("\nPlease look at this list to confirm the correct column for your perturbations is 'gene_target'.")
     
     # Check if target and control names are present in the subsampled data's gene_target column
-    # We do this here, after the backed object is created, but before actual subsampling and memory loading.
-    # This helps catch issues with non-existent target/control names early.
     if target_pert_name not in adata_backed.obs[perturbation_column].cat.categories:
         print(f"Warning: Target perturbation '{target_pert_name}' not found in '{perturbation_column}' column.")
     if control_pert_name not in adata_backed.obs[perturbation_column].cat.categories:
         print(f"Warning: Control perturbation '{control_pert_name}' not found in '{perturbation_column}' column.")
-
 
     # 1. Randomly sample the indices of cells to keep.
     print(f"\nRandomly selecting {n_cells_to_subsample} cells to analyze...")
@@ -69,12 +67,7 @@ try:
     sc.pp.neighbors(adata, n_neighbors=10, n_pcs=20)
     sc.tl.umap(adata)
 
-    # 5. Save the processed data to a new file.
-    print(f"\nSaving processed data to '{output_file_name}'...")
-    adata.write(output_file_name, compression='gzip')
-    print(f"Processed subsampled data saved to '{output_file_name}' successfully.")
-
-    # 6. Visualization of Perturbation Effect and Saving the Plot
+    # 5. Visualization of Perturbation Effect (and saving the UMAP plot)
     print(f"\nGenerating UMAP plots for '{target_pert_name}' and '{control_pert_name}'...")
 
     # Create a new column to highlight the cells of interest.
@@ -82,15 +75,30 @@ try:
     adata.obs.loc[adata.obs[perturbation_column] == target_pert_name, 'is_target_or_control'] = target_pert_name
     adata.obs.loc[adata.obs[perturbation_column] == control_pert_name, 'is_target_or_control'] = control_pert_name
     
-    # Plot the UMAP colored by the perturbation status
-    # AND SAVE IT TO A FILE
-    plot_filename = 'umap_perturbation_effect.pdf' # You can customize this filename
-    sc.pl.umap(adata, color='is_target_or_control', title=f"UMAP of Subsampled Data",
+    # Plot the UMAP colored by the perturbation status and save to file.
+    sc.pl.umap(adata, color='is_target_or_or_control', title=f"UMAP of Subsampled Data",
                groups=[target_pert_name, control_pert_name], size=30,
-               save=f"_{os.path.basename(plot_filename).replace('.pdf', '')}") # Saves as PDF by default with this suffix
-    plt.show() # Still show the plot interactively
+               save="_umap_perturbation_effect.pdf")
 
-    print(f"\nUMAP plot saved to: {plot_filename}")
+    # 6. Differential Expression Analysis (and saving the results)
+    print("\nStarting differential expression analysis...")
+    sc.tl.rank_genes_groups(adata, 'is_target_or_control', method='t-test')
+    
+    # Save the differential gene expression results to a CSV file.
+    results = pd.DataFrame(adata.uns['rank_genes_groups']['names'])
+    results.to_csv('TP53_differential_genes.csv', index=False)
+
+    # Save the violin plots of the top genes to a file.
+    sc.pl.rank_genes_groups_violin(adata, groups=[target_pert_name, control_pert_name], n_genes=8,
+                                   save="_DE_violin_plots.pdf")
+
+    # 7. Final outputs saved to a file
+    print(f"\nAll outputs have been successfully saved to your working directory:")
+    print(f"- Processed AnnData object: '{output_file_name}'")
+    print(f"- UMAP plot: 'umap_is_target_or_or_control_umap_perturbation_effect.pdf'")
+    print(f"- Differential expression results: 'TP53_differential_genes.csv'")
+    print(f"- Differential expression violin plots: 'rank_genes_groups_violin_DE_violin_plots.pdf'")
+    
     print("\nScript completed successfully.")
 
 except FileNotFoundError:
