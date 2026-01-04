@@ -31,7 +31,12 @@ warnings.filterwarnings('ignore')
 
 # Set scanpy settings for better reproducibility
 sc.settings.verbosity = 3  # verbosity level
-sc.settings.set_figure_params(dpi=300, facecolor='white', format='pdf')
+# Note: set_figure_params can cause recursion errors in some versions
+# We'll set figure parameters directly in plotting functions instead
+plt.rcParams['figure.dpi'] = 300
+plt.rcParams['savefig.dpi'] = 300
+plt.rcParams['savefig.format'] = 'pdf'
+plt.rcParams['figure.facecolor'] = 'white'
 
 # ============================================================================
 # CONFIGURATION

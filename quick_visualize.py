@@ -17,7 +17,10 @@ warnings.filterwarnings('ignore')
 
 # Set scanpy settings
 sc.settings.verbosity = 3
-sc.settings.set_figure_params(dpi=150, facecolor='white')
+# Set figure parameters directly to avoid recursion errors
+plt.rcParams['figure.dpi'] = 150
+plt.rcParams['savefig.dpi'] = 150
+plt.rcParams['figure.facecolor'] = 'white'
 
 # ============================================================================
 # CONFIGURATION - EDIT THESE
