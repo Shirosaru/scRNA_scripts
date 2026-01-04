@@ -1,0 +1,36 @@
+{
+  "data_file": "/home2/figshare_data/HEK293T_filtered_dual_guide_cells.h5ad",
+  "output_dir": "perturbation_analysis_results",
+  "perturbation_column": "gene_target",
+  "target_perturbation": "TP53",
+  "control_perturbation": "AAV-control",
+  "n_cells_to_subsample": 100000,
+  "qc": {
+    "min_genes_per_cell": 200,
+    "min_cells_per_gene": 3,
+    "max_mito_pct": 20.0
+  },
+  "normalization": {
+    "target_sum": 10000
+  },
+  "hvg": {
+    "min_mean": 0.0125,
+    "max_mean": 3,
+    "min_disp": 0.5
+  },
+  "dimensionality_reduction": {
+    "n_neighbors": 15,
+    "n_pcs": 50,
+    "resolution": 0.5
+  },
+  "differential_expression": {
+    "method": "wilcoxon",
+    "n_top_genes": 50
+  },
+  "visualization": {
+    "figure_format": "pdf",
+    "dpi": 300
+  },
+  "random_seed": 42
+}
+
